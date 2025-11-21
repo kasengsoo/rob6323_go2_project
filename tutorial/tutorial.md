@@ -19,7 +19,7 @@ Smooth motion requires penalizing jerky actions. To do this, we need to track th
 First, define the reward scale in your configuration file.
 
 ```python
-# In Rob6323Go2EnvCfg
+# In Rob6323Go2EnvCfg (source/rob6323_go2/rob6323_go2/tasks/direct/rob6323_go2/rob6323_go2_env_cfg.py)
 
 # reward scales
 action_rate_reward_scale = -0.1
@@ -29,7 +29,7 @@ action_rate_reward_scale = -0.1
 We need a buffer to store the last few actions. We'll store a history of length 3 (current + 2 previous). Also, update the logging keys to track this new reward.
 
 ```python
-# In Rob6323Go2Env.__init__
+# In Rob6323Go2Env.__init__ (source/rob6323_go2/rob6323_go2/tasks/direct/rob6323_go2/rob6323_go2_env.py)
 
 # Update Logging
 self._episode_sums = {
