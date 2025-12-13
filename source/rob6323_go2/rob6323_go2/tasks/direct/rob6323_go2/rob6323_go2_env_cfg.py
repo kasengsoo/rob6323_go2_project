@@ -104,4 +104,4 @@ class Rob6323Go2EnvCfg(DirectRLEnvCfg):
     ang_vel_xy_reward_scale = -0.001
     feet_clearance_reward_scale = -30.0 # Part 6.1
     tracking_contacts_shaped_force_reward_scale = 4.0
-    torque__magnitude_reward_scale = -0.00005
+    torque__magnitude_reward_scale = -0.00005 # Additional torque regularization
