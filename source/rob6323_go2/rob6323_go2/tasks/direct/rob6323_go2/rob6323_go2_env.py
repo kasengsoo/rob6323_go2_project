@@ -96,7 +96,9 @@ class Rob6323Go2Env(DirectRLEnv):
             id_list, _ = self._contact_sensor.find_bodies(name)
             self._feet_ids_sensor.append(id_list[0])
 
-        self._torques = torch.zeros(self.num_envs, gym.spaces.flatdim(self.single_action_space)) # store commanded torques for regularization
+        self._torques = torch.zeros(self.num_envs, gym.spaces.flatdim(self.single_action_space), dtype=torch.float, device=self.device, requires_grad=False) # store commanded torques for regularization
+        self._viscous_coeff = torch.zeros(self.num_envs, gym.spaces.flatdim(self.single_action_space), dtype=torch.float, device=self.device, requires_grad=False) # store randomized friction coefficients
+        self._stiction_coeff = torch.zeros(self.num_envs, gym.spaces.flatdim(self.single_action_space), dtype=torch.float, device=self.device, requires_grad=False)
 
     def _setup_scene(self):
         self.robot = Articulation(self.cfg.robot_cfg)
@@ -147,6 +149,11 @@ class Rob6323Go2Env(DirectRLEnv):
             -self.torque_limits,
             self.torque_limits,
         )
+
+        # Randomize actuator friction model
+        torque_stiction = self._stiction_coeff * torch.tanh(self.robot.data.joint_vel/0.1)
+        torque_viscous = self._viscous_coeff * self.robot.data.joint_vel
+        torques -= torque_stiction + torque_viscous
 
         # Apply torques to the robot
         self.robot.set_joint_effort_target(torques)
@@ -301,6 +308,10 @@ class Rob6323Go2Env(DirectRLEnv):
         # Part 4.4
         # Reset raibert quantity
         self.gait_indices[env_ids] = 0
+
+        # Random friction coefficients
+        self._viscous_coeff.uniform_(0.0, 0.3)
+        self._stiction_coeff.uniform_(0.0, 2.5)
 
     def _set_debug_vis_impl(self, debug_vis: bool):
         # set visibility of markers
