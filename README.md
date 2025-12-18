@@ -164,4 +164,11 @@ The suggested way to inspect these logs is via the Open OnDemand web interface:
     - [ContactSensorData (`_contact_sensor.data`)](https://isaac-sim.github.io/IsaacLab/main/source/api/lab/isaaclab.sensors.html#isaaclab.sensors.ContactSensorData) — Contains `net_forces_w` (contact forces).
 
 ---
-Students should only edit README.md below this ligne.
+Students should only edit README.md below this line.
+
+## Changes Documented
+### Tutorial Changes
+- Added action rate penalty: Stored the last few actions taken by the policy and calculated the rate and acceleration to penalize high-frequency oscillations (jerky actions)
+- Added a low-level PD controller: Commented out the default PD controller and implemented a custom one using standard PD logic to allow full control of parameters
+- Added early stopping: Defined a threhold height for the robot's base and compared the base height in training against it, terminating training if the height falls below threshold
+- Added gait shaping with the Raibert Heuristic: Added clock indices to the observation space to calculate where the feet should be based on the command velocity, then subtracted the actual feet positions from it to get the error that is penalized
