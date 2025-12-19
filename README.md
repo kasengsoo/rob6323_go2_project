@@ -171,7 +171,7 @@ Students should only edit README.md below this line.
 ### Tutorial Changes
 - **Added action rate penalty:** Stored the last few actions taken by the policy and calculated the rate and acceleration to penalize high-frequency oscillations (jerky actions)
 - **Added a low-level PD controller:** Commented out the default PD controller and implemented a custom one using standard PD logic to allow full control of parameters
-- **Added early stopping:*** Defined a threhold height for the robot's base and compared the base height in training against it, terminating training if the height falls below threshold
+- **Added early stopping:** Defined a threhold height for the robot's base and compared the base height in training against it, terminating training if the height falls below threshold
 - **Added gait shaping with the Raibert Heuristic:** Added clock indices to the observation space to calculate where the feet should be based on the command velocity, then subtracted the actual feet positions from it to get the error that is penalized
 - **Added non-vertical orientation penalty:** Penalized the x and y components of projected gravity on the robot to encourage projected gravity in the z direction, which corresponds with the robot being upright
 - **Added vertical velocity penalty:** Penalized the z component of the robot base's velocity to discourage bouncing
