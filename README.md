@@ -185,6 +185,6 @@ Students should only edit README.md below this line.
 - **Added actuator friction model with randomization:** Randomized static and viscous friction for each training environment and subtracted them from the output torque of the PD controller, which simulates the randomness of real-world actuators for better sim-to-real transfer
 - **Trained locomotion gait on uneven terrain:** Added rough terrain to the training to teach gait that is robust to terrain deformities
 
-### To Reproduce the Results
+## To Reproduce the Results
 - All changes are already implemented in 'rob6323_go2_env_cfg.py' and 'rob6323_go2_env.py'
 - Clone the main branch of this repository and run the 'train.sh' script as instructed above to get the modified policy
