@@ -171,11 +171,11 @@ Students should only edit README.md below this line.
 ### Tutorial Changes
 - **Added action rate penalty:** Stored the last few actions taken by the policy and calculated the rate and acceleration to penalize high-frequency oscillations (jerky actions)
 - **Added a low-level PD controller:** Commented out the default PD controller and implemented a custom one using standard PD logic to allow full control of parameters
-- **Added early stopping:** Defined a threhold height for the robot's base and compared the base height in training against it, terminating training if the height falls below threshold
+- **Added early stopping:** Defined a threhold height for the robot's base and compared the base height in training against it, terminating training if the height falls below threshold to speed up training and discourage low base height
 - **Added gait shaping with the Raibert Heuristic:** Added clock indices to the observation space to calculate where the feet should be based on the command velocity, then subtracted the actual feet positions from it to get the error that is penalized
 - **Added non-vertical orientation penalty:** Penalized the x and y components of projected gravity on the robot to encourage projected gravity in the z direction, which corresponds with the robot being upright
 - **Added vertical velocity penalty:** Penalized the z component of the robot base's velocity to discourage bouncing
-- **Added joint velocity penalty:** Penalized the magnitude of joint velocities to discourage excessive joint velocities
+- **Added joint velocity penalty:** Penalized the magnitude of joint velocities to discourage excessive joint velocities and jerky motion
 - **Added XY angular velocity penalty:** Penalized the x and y component of angular velocity to discourage body rolling and pitching (yaw is allowed since the robot needs it to turn left and right)
 - **Added feet clearance deviation penalty:** Calculated the desired height for each foot based on the gait phase, subtracted the desired height from the actual foot height to get the error being penalized
 - **Added contact reward:** Extracted the contact sensor readings for the feet and rewarded contact forces that aligned with the stance phase of the robot gait
@@ -184,3 +184,7 @@ Students should only edit README.md below this line.
 - **Added torque magnitude penalty:** Penalized torque magnitudes to discourage large motions
 - **Added actuator friction model with randomization:** Randomized static and viscous friction for each training environment and subtracted them from the output torque of the PD controller, which simulates the randomness of real-world actuators for better sim-to-real transfer
 - **Trained locomotion gait on uneven terrain:** Added rough terrain to the training to teach gait that is robust to terrain deformities
+
+### To Reproduce the Results
+- All changes are already implemented in 'rob6323_go2_env_cfg.py' and 'rob6323_go2_env.py'
+- Clone the main branch of this repository and run the 'train.sh' script as instructed above to get the modified policy
