@@ -13,10 +13,11 @@ from isaaclab.scene import InteractiveSceneCfg
 from isaaclab.sim import SimulationCfg
 from isaaclab.utils import configclass
 from isaaclab.terrains import TerrainImporterCfg
-from isaaclab.sensors import ContactSensorCfg
+from isaaclab.sensors import ContactSensorCfg, RayCasterCfg, patterns
 from isaaclab.markers import VisualizationMarkersCfg
 from isaaclab.markers.config import BLUE_ARROW_X_MARKER_CFG, FRAME_MARKER_CFG, GREEN_ARROW_X_MARKER_CFG
 from isaaclab.actuators import ImplicitActuatorCfg # Part 2.1
+from isaaclab.terrains.config.rough import ROUGH_TERRAINS_CFG # To import uneven terrain
 
 @configclass
 class Rob6323Go2EnvCfg(DirectRLEnvCfg):
@@ -26,7 +27,7 @@ class Rob6323Go2EnvCfg(DirectRLEnvCfg):
     # - spaces definition
     action_scale = 0.25
     action_space = 12
-    observation_space = 48 + 4 # Added 4 for clock inputs (Part 4.1)
+    observation_space = 48 + 4 + 1 # Added 4 for clock inputs (Part 4.1) + 1 for heigh data
     state_space = 0
     debug_vis = True
 
@@ -42,9 +43,12 @@ class Rob6323Go2EnvCfg(DirectRLEnvCfg):
             restitution=0.0,
         ),
     )
+
     terrain = TerrainImporterCfg(
         prim_path="/World/ground",
-        terrain_type="plane",
+        terrain_type="generator",
+        terrain_generator=ROUGH_TERRAINS_CFG,
+        max_init_terrain_level=9,
         collision_group=-1,
         physics_material=sim_utils.RigidBodyMaterialCfg(
             friction_combine_mode="multiply",
@@ -74,7 +78,7 @@ class Rob6323Go2EnvCfg(DirectRLEnvCfg):
     )
 
     # scene
-    scene: InteractiveSceneCfg = InteractiveSceneCfg(num_envs=4096, env_spacing=4.0, replicate_physics=True)
+    scene: InteractiveSceneCfg = InteractiveSceneCfg(num_envs=512, env_spacing=4.0, replicate_physics=True)
     contact_sensor: ContactSensorCfg = ContactSensorCfg(
         prim_path="/World/envs/env_.*/Robot/.*", history_length=3, update_period=0.005, track_air_time=True
     )
@@ -92,16 +96,26 @@ class Rob6323Go2EnvCfg(DirectRLEnvCfg):
     goal_vel_visualizer_cfg.markers["arrow"].scale = (0.5, 0.5, 0.5)
     current_vel_visualizer_cfg.markers["arrow"].scale = (0.5, 0.5, 0.5)
 
+    # we add a height scanner for perceptive locomotion
+    height_scanner = RayCasterCfg(
+        prim_path="/World/envs/env_.*/Robot/base",
+        offset=RayCasterCfg.OffsetCfg(pos=(0.0, 0.0, 20.0)),
+        ray_alignment="yaw",
+        pattern_cfg=patterns.GridPatternCfg(resolution=0.1, size=[1.6, 1.0]),
+        debug_vis=False,
+        mesh_prim_paths=["/World/ground"],
+    )
+
     # reward scales
     lin_vel_reward_scale = 1.0
     yaw_rate_reward_scale = 0.5
-    action_rate_reward_scale = -0.1 # Part 1.1
-    base_height_min = 0.05  # Part 3.1 -- Terminate if base is lower than 5 cm
-    raibert_heuristic_reward_scale = -10.0 # Part 4.1
-    orient_reward_scale = -5.0 # Part 5.1 -- Additional reward scales
-    lin_vel_z_reward_scale = -0.02
-    dof_vel_reward_scale = -0.0001
-    ang_vel_xy_reward_scale = -0.001
-    feet_clearance_reward_scale = -30.0 # Part 6.1
-    tracking_contacts_shaped_force_reward_scale = 4.0
-    torque__magnitude_reward_scale = -0.00005 # Additional torque regularization
+    action_rate_reward_scale = 0.0 # Part 1.1
+    base_height_min = 0.0  # Part 3.1 -- Terminate if base is lower than 5 cm
+    raibert_heuristic_reward_scale = 0.0 # Part 4.1
+    orient_reward_scale = 0.0 # Part 5.1 -- Additional reward scales
+    lin_vel_z_reward_scale = 0.0
+    dof_vel_reward_scale = 0.0
+    ang_vel_xy_reward_scale = 0.0
+    feet_clearance_reward_scale = 0.0 # Part 6.1
+    tracking_contacts_shaped_force_reward_scale = 0.0
+    torque__magnitude_reward_scale = 0.0 # Additional torque regularization

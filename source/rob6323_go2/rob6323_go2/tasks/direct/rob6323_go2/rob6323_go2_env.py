@@ -17,7 +17,7 @@ from isaaclab.assets import Articulation
 from isaaclab.envs import DirectRLEnv
 from isaaclab.sim.spawners.from_files import GroundPlaneCfg, spawn_ground_plane
 from isaaclab.utils.math import sample_uniform
-from isaaclab.sensors import ContactSensor
+from isaaclab.sensors import ContactSensor, RayCasterCfg, patterns
 from isaaclab.markers import VisualizationMarkers
 import isaaclab.utils.math as math_utils
 
@@ -100,6 +100,8 @@ class Rob6323Go2Env(DirectRLEnv):
         self._viscous_coeff = torch.zeros(self.num_envs, gym.spaces.flatdim(self.single_action_space), dtype=torch.float, device=self.device, requires_grad=False) # store randomized friction coefficients
         self._stiction_coeff = torch.zeros(self.num_envs, gym.spaces.flatdim(self.single_action_space), dtype=torch.float, device=self.device, requires_grad=False)
 
+        self._height_data = torch.zeros(self.num_envs, 160, dtype=torch.float, device=self.device, requires_grad=False)
+
     def _setup_scene(self):
         self.robot = Articulation(self.cfg.robot_cfg)
         self._contact_sensor = ContactSensor(self.cfg.contact_sensor)
@@ -118,6 +120,11 @@ class Rob6323Go2Env(DirectRLEnv):
         # add lights
         light_cfg = sim_utils.DomeLightCfg(intensity=2000.0, color=(0.75, 0.75, 0.75))
         light_cfg.func("/World/Light", light_cfg)
+
+        if isinstance(self.cfg, Rob6323Go2Env):
+            # add height scanner for perceptive locomotion
+            self._height_scanner = RayCaster(self.cfg.height_scanner)
+            self.scene.sensors["height_scanner"] = self._height_scanner
 
     # COMMENTED: built-in PD controller not used
     # def _pre_physics_step(self, actions: torch.Tensor) -> None:
@@ -163,6 +170,10 @@ class Rob6323Go2Env(DirectRLEnv):
 
     def _get_observations(self) -> dict:
         self._previous_actions = self._actions.clone()
+        if isinstance(self.cfg, Rob6323Go2Env):
+            self._height_data = (
+                self._height_scanner.data.pos_w[:, 2].unsqueeze(1) - self._height_scanner.data.ray_hits_w[..., 2] - 0.5
+            ).clip(-1.0, 1.0)
         obs = torch.cat(
             [
                 tensor
@@ -174,7 +185,8 @@ class Rob6323Go2Env(DirectRLEnv):
                     self.robot.data.joint_pos - self.robot.data.default_joint_pos,
                     self.robot.data.joint_vel,
                     self._actions,
-                    self.clock_inputs  # Add gait phase info (Part 4.6)
+                    self.clock_inputs,  # Add gait phase info (Part 4.6)
+                    self._height_data
                 )
                 if tensor is not None
             ],
@@ -184,6 +196,8 @@ class Rob6323Go2Env(DirectRLEnv):
         return observations
 
     def _get_rewards(self) -> torch.Tensor:
+        print(self._height_data.shape)
+        print(self._height_data)
         # linear velocity tracking
         lin_vel_error = torch.sum(torch.square(self._commands[:, :2] - self.robot.data.root_lin_vel_b[:, :2]), dim=1)
         lin_vel_error_mapped = torch.exp(-lin_vel_error / 0.25)
@@ -231,7 +245,7 @@ class Rob6323Go2Env(DirectRLEnv):
         # Contact forces 
         rew_tracking_contacts_shaped_force = self._reward_tracking_contacts_shaped_force()
         
-        # Torque regularization
+        # Torque magnitude limitation
         rew_torque_magnitude = torch.sum(torch.abs(self._torques), dim=1)
 
         rewards = {
@@ -256,8 +270,8 @@ class Rob6323Go2Env(DirectRLEnv):
     def _get_dones(self) -> tuple[torch.Tensor, torch.Tensor]:
         # Part 3.2
         # terminate if base is too low
-        base_height = self.robot.data.root_pos_w[:, 2]
-        cstr_base_height_min = base_height < self.cfg.base_height_min
+        #base_height = self.robot.data.root_pos_w[:, 2]
+        #cstr_base_height_min = base_height < self.cfg.base_height_min
 
         time_out = self.episode_length_buf >= self.max_episode_length - 1
         net_contact_forces = self._contact_sensor.data.net_forces_w_history
@@ -265,7 +279,8 @@ class Rob6323Go2Env(DirectRLEnv):
         cstr_upsidedown = self.robot.data.projected_gravity_b[:, 2] > 0
 
         # apply all terminations
-        died = cstr_termination_contacts | cstr_upsidedown | cstr_base_height_min
+        died = cstr_termination_contacts | cstr_upsidedown 
+        #| cstr_base_height_min
         return died, time_out
 
     def _reset_idx(self, env_ids: Sequence[int] | None):
