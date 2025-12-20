@@ -183,7 +183,7 @@ Students should only edit README.md below this line.
 ### Additional Changes
 - **Added torque magnitude penalty:** Penalized torque magnitudes to discourage large motions
 - **Added actuator friction model with randomization:** Randomized static and viscous friction for each training environment and subtracted them from the output torque of the PD controller, which simulates the randomness of real-world actuators for better sim-to-real transfer
-- **(Not fully functioning) Trained locomotion gait on uneven terrain:** Added rough terrain to the training to teach gait that is robust to terrain deformities, but was unable to produce natural gait
+- **(Not fully functioning) Trained locomotion gait on uneven terrain:** Added rough terrain to the training to teach gait that is robust to terrain deformities, but was unable to produce natural gait. The edits can be viewed in the Rough-Terrain branch
 
 ## To Reproduce the Results
 - All functioning changes are already implemented in 'rob6323_go2_env_cfg.py' and 'rob6323_go2_env.py' within the main branch
