@@ -188,3 +188,4 @@ Students should only edit README.md below this line.
 ## To Reproduce the Results
 - All functioning changes are already implemented in 'rob6323_go2_env_cfg.py' and 'rob6323_go2_env.py' within the main branch
 - Clone the main branch of this repository and run the 'train.sh' script as instructed above to get the modified policy
+- To view the uneven terrain training and policy, the Robot-Terrain branch needs to be cloned and the 'train.sh' should be ran
